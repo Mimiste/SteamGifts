@@ -258,4 +258,5 @@
     <!-- unsorted -->
     <string name="could_not_load_image">Could not load image.</string>
     <string name="share_image">Share Image</string>
+    <string name="filter_only_enterable_checkbox">Show only giveaways I can enter</string>
 </resources>

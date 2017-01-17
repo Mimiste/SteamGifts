@@ -200,5 +200,15 @@
             app:layout_columnSpan="3"
             app:layout_gravity="center_vertical"
             app:layout_rowWeight="1" />
+
+        <CheckBox
+            android:id="@+id/filter_only_enterable"
+            style="@style/NormalText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/filter_only_enterable_checkbox"
+            app:layout_columnSpan="3"
+            app:layout_gravity="center_vertical"
+            app:layout_rowWeight="1" />
     </android.support.v7.widget.GridLayout>
 </ScrollView>
