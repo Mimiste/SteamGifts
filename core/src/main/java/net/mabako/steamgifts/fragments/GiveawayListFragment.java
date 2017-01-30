@@ -38,6 +38,7 @@ import net.mabako.steamgifts.fragments.interfaces.IHasHideableGiveaways;
 import net.mabako.steamgifts.fragments.util.GiveawayListFragmentStack;
 import net.mabako.steamgifts.persistentdata.FilterData;
 import net.mabako.steamgifts.persistentdata.SavedGiveaways;
+import net.mabako.steamgifts.persistentdata.SteamGiftsUserData;
 import net.mabako.steamgifts.tasks.EnterLeaveGiveawayTask;
 import net.mabako.steamgifts.tasks.LoadGiveawayListTask;
 import net.mabako.steamgifts.tasks.UpdateGiveawayFilterTask;
@@ -125,7 +126,7 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = super.onCreateView(inflater, container, savedInstanceState);
 
-        if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("preference_giveaway_swipe_to_hide", true)) {
+        if (PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("preference_giveaway_swipe_to_hide", true) && SteamGiftsUserData.getCurrent(getContext()).isLoggedIn()) {
             setupSwiping();
         }
 
@@ -214,12 +215,12 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
             GiveawayListFragmentStack.onEnterLeaveResult(giveawayId, what, success);
     }
 
-    public void requestHideGame(int internalGameId, String title) {
+    public void requestHideGame(long internalGameId, String title) {
         new UpdateGiveawayFilterTask<>(this, adapter.getXsrfToken(), UpdateGiveawayFilterTask.HIDE, internalGameId, title).execute();
     }
 
     @Override
-    public void onHideGame(final int internalGameId, boolean propagate, final String gameTitle) {
+    public void onHideGame(final long internalGameId, boolean propagate, final String gameTitle) {
         Log.v(TAG, "onHideGame/" + this.toString() + " ~~ " + propagate);
         if (propagate) {
             GiveawayListFragmentStack.onHideGame(internalGameId);
@@ -245,7 +246,7 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
         }
     }
 
-    public void onShowGame(int internalGameId, boolean propagate) {
+    public void onShowGame(long internalGameId, boolean propagate) {
         Log.v(TAG, "onShowGame/" + this + " ~~ " + propagate);
         if (propagate) {
             GiveawayListFragmentStack.onShowGame(internalGameId);
@@ -368,10 +369,10 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
         private static final long serialVersionUID = -7112241651196581480L;
 
         private List<List<EndlessAdapter.RemovedElement>> removedGiveaways = new ArrayList<>();
-        private final int internalGameId;
+        private final long internalGameId;
         private boolean wasSwiped;
 
-        private LastRemovedGame(EndlessAdapter.RemovedElement removedGiveaway, int internalGameId) {
+        private LastRemovedGame(EndlessAdapter.RemovedElement removedGiveaway, long internalGameId) {
             List<EndlessAdapter.RemovedElement> list = new ArrayList<>();
             list.add(removedGiveaway);
             removedGiveaways.add(list);
@@ -380,7 +381,7 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
             wasSwiped = true;
         }
 
-        private LastRemovedGame(List<EndlessAdapter.RemovedElement> removedGiveaways, int internalGameId) {
+        private LastRemovedGame(List<EndlessAdapter.RemovedElement> removedGiveaways, long internalGameId) {
             this.removedGiveaways.add(removedGiveaways);
             this.internalGameId = internalGameId;
 
@@ -450,6 +451,25 @@ public class GiveawayListFragment extends SearchableListFragment<GiveawayAdapter
             }
 
             super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+        }
+
+        @Override
+        public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+            super.onSelectedChanged(viewHolder, actionState);
+
+            boolean isSwiping = actionState == ItemTouchHelper.ACTION_STATE_SWIPE;
+            swipeContainer.setEnabled(!isSwiping);
+        }
+
+        @Override
+        public int getSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+            int position = viewHolder.getAdapterPosition();
+            Giveaway giveaway = (Giveaway) adapter.getItem(position);
+
+            if(giveaway == null || giveaway.getInternalGameId() <= 0)
+                return 0;
+
+            return super.getSwipeDirs(recyclerView, viewHolder);
         }
     }
 }
